@@ -1,18 +1,78 @@
 package ru.apapikyan.learn.bigdata.mapreds;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
+import org.apache.hadoop.io.IntWritable;
+
 public class ConsoleTest {
 
-		public static void main(String[] args) {
-		String inputRecord = "ip7 - - [24/Apr/2011:04:31:22 -0400] \"GET /sgi_indy/indy_inside.jpg HTTP/1.1\" 200 23285 \"http://machinecity-hello.blogspot.com/2008_01_01_archive.html\" \"Opera/9.80 (Windows NT 5.1; U; en) Presto/2.8.131 Version/11.10\"";
+	public static void main(String[] args) {
+
+		String inputRecord = "ip43 - - [24/Apr/2011:06:37:01 -0400] \"GET /sun_ss10/ HTTP/1.1\" 200 13596 \"-\" \"Java/1.6.0_04\"";
 		String APACHE_LOG_REGXP = "^(\\S+)\\s+(\\S+\\s+\\S+)\\s+\\[([^]]+)\\]\\s+\"(?:GET|POST|HEAD) ([^ ?\"]+)\\??([^ ?\"]+)? HTTP/[0-9.]+\"\\s+([0-9]+)\\s+([-0-9]+)\\s+\"([^\"]*)\"\\s+\"([^\"]*)\"$";
 
+		IntWritable iw1 = new IntWritable(234);
+		IntWritable iw2 = new IntWritable(12456);
+		IntWritable iw3 = new IntWritable(236789);
+
+		File f = new File("000000.log");
+
 		List<String> matchList = new ArrayList<String>();
+
+		FileInputStream fs = null;
+		try {
+			fs = new FileInputStream(f);
+		} catch (FileNotFoundException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		try {
+			BufferedReader br = new BufferedReader(new InputStreamReader(fs));
+			String line = "";
+
+			while ((line = br.readLine()) != null) {
+
+				ALogRecordParser parser = new ALogRecordParser();
+				parser.parse(line);
+
+				System.out.println(parser.getIP() + " - " + parser.getBytes());
+
+			}
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		try {
+			fs.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		System.exit(0);
+
+		float res = iw1.get() + iw2.get() + iw3.get();
+		System.out.println((iw1.get() + iw2.get() + iw3.get()) / 3 + " - " + res);
+		// System.exit(0);
+		// String inputRecord =
+		// "ip7 - - [24/Apr/2011:04:31:22 -0400] \"GET /sgi_indy/indy_inside.jpg HTTP/1.1\" 200 23285 \"http://machinecity-hello.blogspot.com/2008_01_01_archive.html\" \"Opera/9.80 (Windows NT 5.1; U; en) Presto/2.8.131 Version/11.10\"";
+		// String inputRecord =
+		// "ip43 - - [24/Apr/2011:06:37:01 -0400] \"GET /sun_ss10/ HTTP/1.1\" 200 13596 \"-\" \"Java/1.6.0_04\"";
+		// String APACHE_LOG_REGXP =
+		// "^(\\S+)\\s+(\\S+\\s+\\S+)\\s+\\[([^]]+)\\]\\s+\"(?:GET|POST|HEAD) ([^ ?\"]+)\\??([^ ?\"]+)? HTTP/[0-9.]+\"\\s+([0-9]+)\\s+([-0-9]+)\\s+\"([^\"]*)\"\\s+\"([^\"]*)\"$";
+
+		matchList = new ArrayList<String>();
 
 		try {
 			Pattern regex = Pattern.compile(APACHE_LOG_REGXP, Pattern.DOTALL | Pattern.CASE_INSENSITIVE
@@ -21,8 +81,8 @@ public class ConsoleTest {
 			Matcher regexMatcher = regex.matcher(inputRecord);
 
 			while (regexMatcher.find()) {
-				matchList.add(regexMatcher.group(IP_GROUP));
-				matchList.add(regexMatcher.group(BYTES_GRPOUP));
+				matchList.add(regexMatcher.group(ALogRecordParser.IP_GROUP));
+				matchList.add(regexMatcher.group(ALogRecordParser.BYTES_GRPOUP));
 			}
 
 		} catch (PatternSyntaxException ex) {

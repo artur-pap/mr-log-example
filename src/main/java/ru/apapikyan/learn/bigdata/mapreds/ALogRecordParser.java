@@ -2,16 +2,17 @@ package ru.apapikyan.learn.bigdata.mapreds;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
 
 import org.apache.hadoop.io.Text;
 
 public class ALogRecordParser {
 	private static final String APACHE_LOG_REGXP = "^(\\S+)\\s+(\\S+\\s+\\S+)\\s+\\[([^]]+)\\]\\s+\"(?:GET|POST|HEAD) ([^ ?\"]+)\\??([^ ?\"]+)? HTTP/[0-9.]+\"\\s+([0-9]+)\\s+([-0-9]+)\\s+\"([^\"]*)\"\\s+\"([^\"]*)\"$";
-	private static final int BYTES_GRPOUP = 7;
-	private static final int IP_GROUP = 1;
+	public static final int BYTES_GRPOUP = 7;
+	public static final int IP_GROUP = 1;
 
 	public void parse(String record) {
+		String bytesString  = "";
+		
 		try {
 			Pattern regex = Pattern.compile(APACHE_LOG_REGXP, Pattern.DOTALL | Pattern.CASE_INSENSITIVE
 			        | Pattern.UNICODE_CASE | Pattern.MULTILINE | Pattern.COMMENTS);
@@ -20,11 +21,15 @@ public class ALogRecordParser {
 
 			if (regexMatcher.matches()) {
 				ip = regexMatcher.group(IP_GROUP);
-				bytes = Integer.parseInt(regexMatcher.group(BYTES_GRPOUP));
+				
+				bytesString = regexMatcher.group(BYTES_GRPOUP);
+				bytes = Integer.parseInt(bytesString);
+			} else {
+				hasParseError = true;
 			}
 
-		} catch (PatternSyntaxException ex) {
-			ex.printStackTrace();
+		} catch (Exception ex) {
+			System.out.println("Error parsing [" +ip+ "], ["+ bytesString +"] from record: " + record);
 			hasParseError = true;
 		}
 	}
@@ -36,7 +41,7 @@ public class ALogRecordParser {
 	public void parse(Text record) {
 		parse(record.toString());
 	}
-	
+
 	public boolean hasParseError() {
 		return hasParseError;
 	}
