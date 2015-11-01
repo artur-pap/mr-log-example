@@ -2,23 +2,27 @@ package ru.apapikyan.learn.bigdata.mapreds;
 
 import java.io.IOException;
 
+import org.apache.hadoop.io.ArrayWritable;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Reducer;
 
-public class ALogReducer extends Reducer<Text, IntWritable, Text, IntWritable> {
-
+public class ALogCombiner extends Reducer<Text, IntWritable, Text, ArrayWritable> {
 	@Override
 	protected void reduce(Text key, Iterable<IntWritable> values, Context context) throws IOException,
 	        InterruptedException {
 
-		// float totalBytes = 0f;
-		int totalBytes = 0;
+		int sum = 0;
+		int count = 0;
 
 		for (IntWritable value : values) {
-			totalBytes += value.get();
+			sum += value.get();
+			count++;
 		}
 
-		context.write(key, new IntWritable(totalBytes));
+		IntWritable[] innerArray = { new IntWritable(sum), new IntWritable(count) };
+		ArrayWritable arr = new ArrayWritable(IntWritable.class, innerArray);
+
+		context.write(key, arr);
 	}
 }
