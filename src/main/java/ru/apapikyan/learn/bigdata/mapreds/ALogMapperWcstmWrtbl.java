@@ -2,18 +2,16 @@ package ru.apapikyan.learn.bigdata.mapreds;
 
 import java.io.IOException;
 
-import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
 
-public class ALogMapper extends Mapper<LongWritable, Text, Text, IntWritable> {
+public class ALogMapperWcstmWrtbl extends Mapper<LongWritable, Text, Text, SumCountWritable> {
+
 	private ALogRecordParser parser = new ALogRecordParser();
 
 	enum LogRecord {
-		// INVALID RECORD
-		BAD,
-		INAVLID_BYTES_VALUE
+		BAD, INAVLID_BYTES_VALUE
 	}
 
 	enum Browser {
@@ -21,14 +19,10 @@ public class ALogMapper extends Mapper<LongWritable, Text, Text, IntWritable> {
 	}
 
 	@Override
-	protected void map(LongWritable key, Text value, Mapper<LongWritable, Text, Text, IntWritable>.Context context)
-	        throws IOException, InterruptedException {
-		
+	protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
 		parser.parse(value);
 
 		if (!parser.hasParseError()) {
-			context.write(new Text(parser.getIP()), new IntWritable(parser.getBytes()));
-			//
 			String browser = parser.getBrowser();
 			//
 			if (!browser.isEmpty()) {
@@ -39,6 +33,9 @@ public class ALogMapper extends Mapper<LongWritable, Text, Text, IntWritable> {
 			if (parser.isInvalidBytesValue()) {
 				context.getCounter(LogRecord.INAVLID_BYTES_VALUE).increment(1);
 			}
+			//
+			SumCountWritable scw = new SumCountWritable(parser.getBytesDouble(), 1);
+			context.write(new Text(parser.getIP()), scw);
 		} else {
 			System.err.println("Ignoring possibly corrupt input: " + value);
 			context.getCounter(LogRecord.BAD).increment(1);

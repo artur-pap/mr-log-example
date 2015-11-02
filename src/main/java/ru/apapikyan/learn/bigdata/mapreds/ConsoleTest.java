@@ -14,6 +14,10 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
 import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.Text;
+
+import ru.apapikyan.learn.bigdata.mapreds.ALogMapper.Browser;
+import ru.apapikyan.learn.bigdata.mapreds.ALogMapper.LogRecord;
 
 public class ConsoleTest {
 
@@ -31,9 +35,10 @@ public class ConsoleTest {
 		IntWritable iw2 = new IntWritable(12456);
 		IntWritable iw3 = new IntWritable(236789);
 
-		for (browsers br : browsers.values()) {
-			System.out.println(br.name() + "-" + br.ordinal() + "-" + br.name().equals("Chrome".toLowerCase()));
-		}
+		// for (browsers br : browsers.values()) {
+		// System.out.println(br.name() + "-" + br.ordinal() + "-" +
+		// br.name().equals("Chrome".toLowerCase()));
+		// }
 		// System.exit(0);
 
 		File f = new File("000000.log");
@@ -51,20 +56,52 @@ public class ConsoleTest {
 			String line = "";
 			SortedSet<String> brws = new TreeSet<String>();
 
+			int lineCount = 0;
+
 			while ((line = br.readLine()) != null) {
 
 				ALogRecordParser parser = new ALogRecordParser();
 				parser.parse(line);
+				// System.out.println(line);
 
-				System.out.println(parser.getIP() + " - " + parser.getBytes() + " - " + parser.getBrowser() + " - "
-				        + parser.isInvalidBytesValue() + " - " + parser.hasParseError());
+				// System.out.println(lineCount +","+ parser.getIP() + "," +
+				// parser.getBytes() + "," + parser.getBrowser() + ","
+				// + parser.isInvalidBytesValue() + "," +
+				// parser.hasParseError());
 
-				if (parser.getBrowser() != null && !brws.contains(parser.getBrowser())) {
-					brws.add(parser.getBrowser());
+				// if(parser.hasParseError()) {
+				// lineCount++;
+				// System.out.println(lineCount +","+ parser.getIP() + "," +
+				// parser.getBytes() + "," + parser.getBrowser() + ","
+				// + parser.isInvalidBytesValue() + "," +
+				// parser.hasParseError());
+				// }
+
+				// if (parser.getBrowser() != null &&
+				// !brws.contains(parser.getBrowser())) {
+				// brws.add(parser.getBrowser());
+				// }
+				if (!parser.hasParseError()) {
+					String browser = parser.getBrowser();
+					//
+					if (!browser.isEmpty()) {
+						Browser b;
+						b = Browser.valueOf(browser);
+						System.out.println("browser: " + b);
+					}
+					if (parser.isInvalidBytesValue()) {
+						
+						System.out.println("invalid bytes: " + LogRecord.INAVLID_BYTES_VALUE);
+					}
+				} else {
+					lineCount++;
+					System.out.println("Ignoring possibly corrupt input: " + line);
 				}
 			}
 
-			//Iterator<String> itt = brws.iterator();
+			System.out.println("Linec Count = " + lineCount);
+
+			// Iterator<String> itt = brws.iterator();
 			// while (itt.hasNext()) {
 			// System.out.println("0browser: " + itt.next());
 			// }
@@ -110,7 +147,7 @@ public class ConsoleTest {
 		}
 
 		for (String s : matchList) {
-			System.out.println(s);
+			System.out.println("matchList: " + s);
 		}
 	}
 }
